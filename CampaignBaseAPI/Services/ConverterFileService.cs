@@ -117,7 +117,7 @@ namespace CampaignBaseAPI.Services
 
             if(header.Length == 0 || dataLine is null || dataLine.Length == 0)
                 throw new ArgumentException("File is empty or does not contain data.");
-                return file;
+            return file;
         }
     }
 

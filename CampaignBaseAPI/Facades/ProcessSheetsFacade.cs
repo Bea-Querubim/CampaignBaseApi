@@ -30,11 +30,10 @@ namespace CampaignBaseAPI.Facades
             // primeiro: verifica se o arquivo esta vazio ou nullo, independente da extensao
             // verifica extensao do arquivo, se for csv, nao precisa converter mas transforma em MemoryStream, se for xls ou xlsx, converter para csv <MemoryStream>
             var fileConverted = await _converterFileService.ConvertFileAsync(requestDTO.File);
-            Console.WriteLine(fileConverted.ToString());
-            /*
+            
             // ler o arquivo e fazer a partição da base enviada
-            var partionSheets = await _partitionSheetsService.PartitionSheetsServices(fileConverted, requestDTO.MaxLinesPerSheet);
-
+            var partionSheets = await _partitionSheetsService.PartitionSheetsAsync(fileConverted, requestDTO.Size, requestDTO.File.FileName);
+            /*
             //criar a pasta e salvar os aquivos particionados
             var zipFilePath = await _zipService.CreaterZipFileAsync(partionSheets);
 

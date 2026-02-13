@@ -8,6 +8,8 @@ namespace CampaignBaseAPI.Constants
     public static class FileConstants
     {
         public static readonly string[] AllowedExtensions = [".xls", ".xlsx", ".csv"];
+        public static readonly string CsvType = ".csv";
+        public static readonly string NamedFilePartition = "_PAG-{0}";
     
     }
 }
