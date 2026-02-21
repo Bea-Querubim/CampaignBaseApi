@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
+using System.IO;
 using System.Threading.Tasks;
 
 namespace CampaignBaseAPI.Services.Interface
@@ -10,8 +10,8 @@ namespace CampaignBaseAPI.Services.Interface
         /// <summary>
         /// Creating a zip file with the partitioned sheets.
         /// </summary>
-        /// <param name="file"> CSV file to be zipped</param>
+        /// <param name="files">Dictionary containing file names and their corresponding MemoryStream objects</param>
         /// <returns>Byte array representing the zipped file</returns>
-        Task<byte[]> CreaterZipFileAsync(List<IFormFile> files);
+        Task<byte[]> CreateZipFileAsync(Dictionary<string, MemoryStream> files);
     }
 }

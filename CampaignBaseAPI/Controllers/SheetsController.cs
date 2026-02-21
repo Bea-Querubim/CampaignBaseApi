@@ -32,17 +32,7 @@ namespace CampaignBaseAPI.Controllers
 
             var file = await _processSheetsFacade.ProcessSheetsAsync(requestDTO);
 
-            return Ok(File(file, "application/zip", $"{Path.GetFileNameWithoutExtension(requestDTO.File.FileName)}.zip"));
-
-            /*return partionSheets.Error != true ? 
-                Ok(new { Message = string.Format(ReturnMessages.SheetProcessedSuccessfully, requestDTO.File.FileName) }) : 
-                BadRequest(partionSheets.Message);*/
-            /*
-            return (!FileConstants.AllowedExtensions.Contains(fileExtension)) ?
-                BadRequest(string.Format(ReturnMessages.InvalidFileExtension, string.Join(", ", FileConstants.AllowedExtensions))) : 
-                Ok(new { Message = string.Format(ReturnMessages.SheetProcessedSuccessfully, requestDTO.File.FileName) });
-            */
-
+            return File(file, "application/zip", $"{Path.GetFileNameWithoutExtension(requestDTO.File.FileName)}.zip");
         }
     }
 }
