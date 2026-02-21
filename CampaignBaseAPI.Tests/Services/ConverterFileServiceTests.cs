@@ -2,8 +2,6 @@ using ClosedXML.Excel;
 using System.Text;
 using Microsoft.AspNetCore.Http;
 using CampaignBaseAPI.Services;
-using System.Reflection;
-using System.Runtime.InteropServices;
 
 namespace CampaignBaseAPI.Tests.Services
 {
@@ -20,9 +18,12 @@ namespace CampaignBaseAPI.Tests.Services
             //Arrange → preparar cenário
             ConverterFileService converterFileService = new ConverterFileService();
             //Act → executar ação
-            //Assert → validar
-            await Assert.ThrowsAsync<ArgumentException>(() => converterFileService.ConvertFileAsync(null));
+             IFormFile? file = null;
+            //Assert & act → verificar resultado e executar ação
+            // Assert.ThrowsAsync é usado para verificar se a chamada do método ConvertFileAsync lança uma exceção do tipo ArgumentException quando o arquivo é nulo. O teste passa se a exceção for lançada, indicando que o método está lidando corretamente com a entrada nula.
+            await Assert.ThrowsAsync<ArgumentException>(() => converterFileService.ConvertFileAsync(file!));
         }
+
 
         [Fact]
         public async Task ConvertFileAsync_ShouldThrowException_WhenFileHaventData()

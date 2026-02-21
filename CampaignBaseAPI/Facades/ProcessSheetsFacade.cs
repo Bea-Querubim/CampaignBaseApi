@@ -33,13 +33,12 @@ namespace CampaignBaseAPI.Facades
             
             // ler o arquivo e fazer a partição da base enviada
             var partionSheets = await _partitionSheetsService.PartitionSheetsAsync(fileConverted, requestDTO.Size, requestDTO.File.FileName);
-            /*
+            
             //criar a pasta e salvar os aquivos particionados
-            var zipFilePath = await _zipService.CreaterZipFileAsync(partionSheets);
+            var zipFilePath = await _zipService.CreateZipFileAsync(partionSheets);
 
             //retornar resposta para o controller
-            return zipFilePath;*/
-             return Array.Empty<byte>(); // Placeholder return statement, replace with actual implementation
+            return zipFilePath;
         }
     }
 }
