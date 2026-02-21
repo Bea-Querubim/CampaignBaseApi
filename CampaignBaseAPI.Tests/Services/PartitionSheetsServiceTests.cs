@@ -13,7 +13,7 @@ namespace CampaignBaseAPI.Tests.Services
     {
         public PartitionSheetsServiceTests()
         {
-            System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
         }
 
         [Fact]
@@ -56,7 +56,7 @@ namespace CampaignBaseAPI.Tests.Services
             var sheetsFile = await partitionSheetsService.PartitionSheetsAsync(fileStreamMock, Sizes.dois_mil, "file.csv");
 
             // Assert
-            Assert.Equal(1, sheetsFile.Count); // Espera-se 1 arquivo: com 2000 linhas
+            Assert.Single(sheetsFile); // Espera-se 1 arquivo: com 2000 linhas
                 //valida os nomes
             Assert.Contains("file_PAG-1.csv", sheetsFile.Keys);
         }
@@ -114,7 +114,6 @@ namespace CampaignBaseAPI.Tests.Services
             while ((line = reader.ReadLine()) != null)
             {
                 count++;
-
             }
             return count;
         }
