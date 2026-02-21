@@ -34,7 +34,7 @@ A CampaignBase API facilita o gerenciamento de grandes bases de contatos, dividi
 - **.NET 10.0**
 - **ASP.NET Core Web API**
 - **Swagger/OpenAPI** - Documentação da API
-- **EPPlus** / **NPOI** - Manipulação de arquivos Excel
+- **ExcelDataReader** - Leitura e conversão de arquivos Excel
 - **xUnit** - Testes unitários
 - **C#** - Linguagem de programação
 
@@ -61,21 +61,20 @@ dotnet restore
 ### 3. Execute a aplicação
 
 ```bash
-cd CampaignBaseAPI
-dotnet run
+dotnet run --project .\CampaignBaseAPI\CampaignBaseAPI.csproj
 ```
 
 ### 4. Acesse a documentação Swagger
 
 Abra seu navegador e acesse:
 ```
-http://localhost:5000
+http://localhost:5126
 ```
 
 ou
 
 ```
-https://localhost:5001
+https://localhost:5126
 ```
 
 ## 📌 Como Usar
@@ -106,15 +105,17 @@ Retorna um arquivo ZIP contendo os arquivos particionados da base original.
 
 ```
 base_contatos.zip
-├── base_contatos_parte_1.xlsx
-├── base_contatos_parte_2.xlsx
-└── base_contatos_parte_3.xlsx
+├── base_contatos_PAG-1.csv
+├── base_contatos_PAG-2.csv
+└── base_contatos_PAG-3.csv
 ```
 
 #### Possíveis Erros
 
 - **400 Bad Request**: Arquivo vazio ou formato inválido
 - **500 Internal Server Error**: Erro no processamento
+
+> Observação: os arquivos dentro do ZIP são sempre gerados em **CSV**, inclusive quando a entrada original é Excel.
 
 ## 📂 Estrutura do Projeto
 
@@ -145,6 +146,15 @@ dotnet test
 ```bash
 dotnet test --collect:"XPlat Code Coverage"
 ```
+
+## 🧠 Decisões Técnicas
+
+- **Separação de responsabilidades**: Controller, Facade e Services separados para manter o fluxo testável e com baixo acoplamento.
+- **Fail fast no endpoint**: validações iniciais de arquivo/extensão no controller para retorno rápido ao cliente.
+- **Conversão padronizada de saída**: entrada pode ser Excel/CSV, mas a saída final é sempre CSV dentro do ZIP.
+- **Processamento em memória**: uso de `MemoryStream` para evitar escrita em disco e simplificar download no Swagger/API.
+- **Criação correta do ZIP**: finalização do `ZipArchive` antes de retornar bytes, garantindo arquivo íntegro.
+- **Testes por cenário de risco**: cobertura de caminhos felizes, bordas (null/vazio/parcial) e falhas de montagem.
 
 ## 🤝 Como Contribuir
 
