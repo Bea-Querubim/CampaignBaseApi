@@ -9,6 +9,7 @@ namespace CampaignBaseAPI.Services
             services.AddScoped<IConverterFileService, ConverterFileService>();
             services.AddScoped<IZipService, ZipService>();
             services.AddScoped<IPartitionSheetsService, PartitionSheetsService>();
+            services.AddScoped<IBaseValidationService, BaseValidationService>();
 
             return services;
         }
