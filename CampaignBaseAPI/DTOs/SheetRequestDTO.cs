@@ -10,7 +10,7 @@ namespace CampaignBaseAPI.DTOs
         public Sizes Size { get; set; } 
 
         [Required(ErrorMessage = Constants.ReturnMessages.FileRequired)]
-        public IFormFile File { get; set; }
+        public required IFormFile File { get; set; }
     }
 
 }
