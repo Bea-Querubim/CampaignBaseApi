@@ -21,19 +21,18 @@ namespace CampaignBaseAPI.Services
                 using var reader = new StreamReader(file);
 
                 var phoneNumbersDeduplicate = new HashSet<string>();
-                var header = await reader.ReadLineAsync(); // Lê o cabeçalho do arquivo CSV
-                var line = await reader.ReadLineAsync(); // Lê a primeira linha de dados do arquivo CSV
-                var countLines = 2; // inicia em 2 pulando o cabeçalho
+                var header = await reader.ReadLineAsync();
+                var line = await reader.ReadLineAsync();
+                var countLines = 2;
 
                 if (line == null || string.IsNullOrWhiteSpace(line))
                     throw new ArgumentException(EmptyFile);
 
                 do
                 {
-                    var phone = line.Split(',')[0]; // Considera que o número de telefone está na primeira coluna
+                    var phone = line.Split(',')[0];
                     var phoneValidationResult = NormalizeAndValidatePhone(phone);
 
-                    // Ajuste: contabilizar telefone vazio corretamente
                     if (string.IsNullOrWhiteSpace(phone))
                     {
                         var removedRowDetail = new RemovedRowDetail
@@ -95,7 +94,9 @@ namespace CampaignBaseAPI.Services
                     {
                         var fields = line.Split(",");
                         fields[0] = phoneValidationResult.NormalizedNumber;
-                        cleanedFile.AppendLine(string.Join(",", fields)); validationBaseResult.TotalValidRows++;
+                        cleanedFile.AppendLine(string.Join(",", fields));
+                        validationBaseResult.TotalValidRows++;
+                         validationBaseResult.TotalValidRows++;
                     }
 
                     validationBaseResult.TotalInputRows++;
@@ -106,7 +107,6 @@ namespace CampaignBaseAPI.Services
                 {
                     validationBaseResult.CleanedFile = new MemoryStream(Encoding.UTF8.GetBytes(header + Environment.NewLine + cleanedFile.ToString()));
                 }
-                // Resumo para o relatório
                 validationBaseResult.Report =
                     "-------* REPORT QUANTITY SUMMARY *-------\n" +
                     $"Total input rows: {validationBaseResult.TotalInputRows}\n" +
@@ -132,9 +132,8 @@ namespace CampaignBaseAPI.Services
             var validationReturn = new PhoneValidationResult();
             try
             {
-                var digits = new string(phoneNumber.Where(char.IsDigit).ToArray()); // remove + () espaços - e .
+                var digits = new string(phoneNumber.Where(char.IsDigit).ToArray());
 
-                // Se tiver 13 dígitos e começar com 55, remove o DDI
                 if (digits.Length == 13 && digits.StartsWith("55"))
                 digits = digits.Substring(2);
 
@@ -146,7 +145,6 @@ namespace CampaignBaseAPI.Services
                     return validationReturn;
                 }
 
-                // Se tiver 11 dígitos, considera válido
                 if (digits.Length == 11)
                 {
                     validationReturn.IsValid = true;
