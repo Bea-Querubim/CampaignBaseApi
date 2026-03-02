@@ -30,8 +30,25 @@ namespace CampaignBaseAPI.Services
 
                 do
                 {
+                    var phone = line.Split(',')[0]; // Considera que o número de telefone está na primeira coluna
+                    var phoneValidationResult = NormalizeAndValidatePhone(phone);
 
-                    var phoneValidationResult = NormalizeAndValidatePhone(line);
+                    // Ajuste: contabilizar telefone vazio corretamente
+                    if (string.IsNullOrWhiteSpace(phone))
+                    {
+                        var removedRowDetail = new RemovedRowDetail
+                        {
+                            OriginalPhone = phoneValidationResult.OriginalPhone,
+                            NormalizedPhone = phoneValidationResult.NormalizedNumber,
+                            Reason = EmptyPhone,
+                            RowNumber = countLines
+                        };
+                        validationBaseResult.RemovedRowDetails!.Add(removedRowDetail);
+                        validationBaseResult.EmptyPhoneRowsCount++;
+                        validationBaseResult.TotalInputRows++;
+                        countLines++;
+                        continue;
+                    }
 
                     if (!phoneValidationResult.IsValid)
                     {
@@ -46,10 +63,6 @@ namespace CampaignBaseAPI.Services
 
                         switch (phoneValidationResult.Reason)
                         {
-                            case EmptyPhone:
-                                validationBaseResult.EmptyPhoneRowsCount++;
-                                break;
-
                             case InvalidPhone:
                                 validationBaseResult.InvalidPhoneRowsCount++;
                                 break;
@@ -60,7 +73,7 @@ namespace CampaignBaseAPI.Services
                         validationBaseResult.TotalInputRows++;
                         countLines++;
                     }
-                    else if (!phoneNumbersDeduplicate.Add(phoneValidationResult.NormalizedNumber)) // Verifica se o número já existe no HashSet, retorna true se o número foi adicionado, false se já existe
+                    else if (!phoneNumbersDeduplicate.Add(phoneValidationResult.NormalizedNumber))
                     {
                         phoneValidationResult.IsValid = false;
                         phoneValidationResult.Reason = DuplicatedPhone;
@@ -93,6 +106,18 @@ namespace CampaignBaseAPI.Services
                 {
                     validationBaseResult.CleanedFile = new MemoryStream(Encoding.UTF8.GetBytes(header + Environment.NewLine + cleanedFile.ToString()));
                 }
+                // Resumo para o relatório
+                validationBaseResult.Report =
+                    "-------* REPORT QUANTITY SUMMARY *-------\n" +
+                    $"Total input rows: {validationBaseResult.TotalInputRows}\n" +
+                    $"Total valid rows: {validationBaseResult.TotalValidRows}\n" +
+                    $"Empty phone rows: {validationBaseResult.EmptyPhoneRowsCount}\n" +
+                    $"Invalid phone rows: {validationBaseResult.InvalidPhoneRowsCount}\n" +
+                    $"Duplicated rows removed: {validationBaseResult.DuplicatedRowsRemovedCount}\n";
+
+                if (validationBaseResult.TotalValidRows == 0)
+                    throw new ArgumentException(NoValidRowsAfterValidation);
+
                 return validationBaseResult;
 
             }
@@ -109,32 +134,31 @@ namespace CampaignBaseAPI.Services
             {
                 var digits = new string(phoneNumber.Where(char.IsDigit).ToArray()); // remove + () espaços - e .
 
-                if (digits.StartsWith("55"))
-                    digits = digits.Substring(2); // remove o DDI 55
+                // Se tiver 13 dígitos e começar com 55, remove o DDI
+                if (digits.Length == 13 && digits.StartsWith("55"))
+                digits = digits.Substring(2);
 
                 if (string.IsNullOrEmpty(digits))
                 {
                     validationReturn.OriginalPhone = phoneNumber;
                     validationReturn.NormalizedNumber = digits;
                     validationReturn.Reason = EmptyPhone;
-
                     return validationReturn;
                 }
 
-
-                if (!(digits.Length == 11) || (digits.Length == 10))
+                // Se tiver 11 dígitos, considera válido
+                if (digits.Length == 11)
                 {
-                    validationReturn.OriginalPhone = phoneNumber;
+                    validationReturn.IsValid = true;
                     validationReturn.NormalizedNumber = digits;
-                    validationReturn.Reason = InvalidPhone;
-
+                    validationReturn.OriginalPhone = phoneNumber;
+                    validationReturn.Reason = null;
                     return validationReturn;
                 }
 
-                validationReturn.IsValid = true;
-                validationReturn.NormalizedNumber = digits;
                 validationReturn.OriginalPhone = phoneNumber;
-                validationReturn.Reason = null;
+                validationReturn.NormalizedNumber = digits;
+                validationReturn.Reason = InvalidPhone;
                 return validationReturn;
 
             }
