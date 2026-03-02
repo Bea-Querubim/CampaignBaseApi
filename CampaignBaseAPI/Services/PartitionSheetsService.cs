@@ -24,8 +24,8 @@ namespace CampaignBaseAPI.Services
             var count = default(int);
             int fileNamedNumberPage = 1;
             var partitionedSheets = new Dictionary<string, MemoryStream>();
-            var header = await reader.ReadLineAsync(); // Lê o cabeçalho do arquivo CSV
-            var line = await reader.ReadLineAsync(); // Lê a primeira linha de dados do arquivo CSV
+            var header = await reader.ReadLineAsync();
+            var line = await reader.ReadLineAsync();
             if (string.IsNullOrWhiteSpace(header) || string.IsNullOrWhiteSpace(line))
                 throw new ArgumentException(ReturnMessages.EmptyFile);
             var atualFile = new StringBuilder();
@@ -33,16 +33,16 @@ namespace CampaignBaseAPI.Services
             do 
             {
                 if (count == 0)
-                    atualFile.AppendLine(header); // Adiciona o cabeçalho ao novo arquivo
+                    atualFile.AppendLine(header);
 
-                atualFile.AppendLine(line); // Adiciona a linha atual ao novo arquivo
+                atualFile.AppendLine(line);
                 count++;
 
                 if (count >= (int)size)
                 {
                     partitionedSheets.Add(GetNamePageFile(fileName, fileNamedNumberPage), new MemoryStream(Encoding.UTF8.GetBytes(atualFile.ToString())));
-                    atualFile.Clear(); // Limpa o conteúdo para a próxima partição
-                    count = 0; // Reseta o contador para a próxima partição
+                    atualFile.Clear();
+                    count = 0;
                     fileNamedNumberPage++;
                 }
             } while ((line = await reader.ReadLineAsync()) != null);

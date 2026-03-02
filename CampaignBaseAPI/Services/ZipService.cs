@@ -19,9 +19,9 @@ namespace CampaignBaseAPI.Services
                 throw new ArgumentException(ReturnMessages.EmptyFileZipException, nameof(files));
             try
             {
-                using var stream = new MemoryStream(); //fecha depois de retornar o array de bytes
+                using var stream = new MemoryStream();
 
-                using (var zipArchive = new ZipArchive(stream, ZipArchiveMode.Create, leaveOpen: true)) //fecha antes de retornar o array de bytes
+                using (var zipArchive = new ZipArchive(stream, ZipArchiveMode.Create, leaveOpen: true))
                 {
                     foreach (var file in files)
                     {
@@ -31,7 +31,6 @@ namespace CampaignBaseAPI.Services
                         await file.Value.CopyToAsync(entryStream);
                     }
                 
-                    // Add report, duplicated phones, and removed row details as separate entries in the zip
                     var reportEntry = zipArchive.CreateEntry("Report.txt", CompressionLevel.Fastest);
                     using (var reportStream = reportEntry.Open())
                     using (var writer = new StreamWriter(reportStream))

@@ -19,59 +19,52 @@ namespace CampaignBaseAPI.Services
             {
                 if (file.FileName.EndsWith(".csv", StringComparison.OrdinalIgnoreCase))
                 {
-                    var memoryStream = new MemoryStream(); // cria a variazvel para o tempo de execução do método, depois é descartada
-                    await file.CopyToAsync(memoryStream); // copia o arquivo csv para o memoryStream
-                    memoryStream.Position = 0; // reseta a posição do stream para o início, para que possa ser lido posteriormente
+                    var memoryStream = new MemoryStream();
+                    await file.CopyToAsync(memoryStream);
+                    memoryStream.Position = 0;
                     return memoryStream ?? throw new InvalidOperationException("Failed to convert CSV file to MemoryStream.");
                 }
                 if (file.FileName.EndsWith(".xlsx", StringComparison.OrdinalIgnoreCase) || file.FileName.EndsWith(".xls", StringComparison.OrdinalIgnoreCase))
                 {
-                    //stringbuilder é usado para construir o conteúdo do arquivo csv de forma eficiente, evitando a criação de múltiplas strings imutáveis durante a concatenação
-                    StringBuilder csvContent = new StringBuilder();
+                    var csvContent = new StringBuilder();
                     using (var stream = new MemoryStream())
                     {
-                        // Copy the source data into the memory stream (e.g., from an uploaded file)
                         await file.CopyToAsync(stream);
-                        // Reset the stream position to the beginning
                         stream.Position = 0;
 
-                        // Create the reader
                         using (var reader = ExcelReaderFactory.CreateReader(stream))
                         {
                             var result = reader.AsDataSet(new ExcelDataSetConfiguration()
                             {
                                 ConfigureDataTable = (_) => new ExcelDataTableConfiguration()
                                 {
-                                    UseHeaderRow = true  // pega o cabeçalho da planilha
+                                    UseHeaderRow = true
                                 }
                             });
 
-                            var dataTable = result.Tables[0]; // Pega a primeira tabela (planilha)
+                            var dataTable = result.Tables[0];
 
-                            //verifica o cabeçalho do XLS
                             if (dataTable.Columns.Count == 0 || dataTable.Rows.Count == 0)
                                 throw new ArgumentException("Excel file is empty or does not contain data.");
 
-                            //escrever o cabecalho
                             for (int i = 0; i < dataTable.Columns.Count; i++)
                             {
-                                if (i > 0) csvContent.Append(","); // Adiciona vírgula entre os nomes das colunas, exceto antes do primeiro
-                                csvContent.Append(EscapeField(dataTable.Columns[i].ColumnName)); //tratativa de scape ""
+                                if (i > 0) csvContent.Append(",");
+                                csvContent.Append(EscapeField(dataTable.Columns[i].ColumnName));
                             }
-                            csvContent.AppendLine(); // Nova linha após o cabeçalho
+                            csvContent.AppendLine();
 
-                            //escrever as linhas apartir do cabeçalho
                             foreach (DataRow row in dataTable.Rows)
                             {
                                 for (int i = 0; i < dataTable.Columns.Count; i++)
                                 {
-                                    if (i > 0) csvContent.Append(","); // Adiciona vírgula entre os valores das colunas, exceto antes do primeiro
+                                    if (i > 0) csvContent.Append(",");
 
                                     object cellValue = row[i];
-                                    string fieldValue = EscapeField(cellValue?.ToString() ?? ""); //tratativa de scape ""
-                                    csvContent.Append(fieldValue); // Adiciona o valor da célula ao conteúdo do CSV
+                                    string fieldValue = EscapeField(cellValue?.ToString() ?? "");
+                                    csvContent.Append(fieldValue);
                                 }
-                                csvContent.AppendLine(); // Nova linha após cada registro
+                                csvContent.AppendLine();
                             }
                         }
                     }
@@ -84,13 +77,12 @@ namespace CampaignBaseAPI.Services
             }
             catch (InvalidOperationException)
             {
-                throw; // Rethrow the exception to be handled by the caller
+                throw;
             }
             catch (Exception ex)
             {
-                // Log the exception (you can use a logging framework like Serilog, NLog, etc.)
                 Console.Error.WriteLine($"Error converting file {file?.FileName ?? ""}: {ex.Message}");
-                throw; // Rethrow the exception to be handled by the caller
+                throw;
             }
         }
 
@@ -100,9 +92,7 @@ namespace CampaignBaseAPI.Services
 
             if (field.Contains(",") || field.Contains("\"") || field.Contains("\n"))
             {
-                // Escape double quotes by doubling them
                 string escapedField = field.Replace("\"", "\"\"");
-                // Enclose the field in double quotes
                 return $"\"{escapedField}\"";
             }
             return field;
@@ -112,8 +102,8 @@ namespace CampaignBaseAPI.Services
         private static async Task<IFormFile> ValidateFileHasDataAsync(IFormFile file)
         {
             using var reader = new StreamReader(file.OpenReadStream());
-            var header = await reader.ReadLineAsync() ?? ""; // Lê a primeira linha do arquivo (cabeçalho)
-            var dataLine = await reader.ReadLineAsync(); // Lê a segunda linha do arquivo
+            var header = await reader.ReadLineAsync() ?? "";
+            var dataLine = await reader.ReadLineAsync();
 
             if (header.Length == 0 || dataLine is null || dataLine.Length == 0)
                 throw new ArgumentException("File is empty or does not contain data.");
