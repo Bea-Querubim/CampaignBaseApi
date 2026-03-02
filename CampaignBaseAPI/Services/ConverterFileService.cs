@@ -12,7 +12,7 @@ namespace CampaignBaseAPI.Services
         {
             if (file is null)
                 throw new ArgumentException("File is null or empty.");
-            
+
             await ValidateFileHasDataAsync(file);
 
             try
@@ -49,7 +49,7 @@ namespace CampaignBaseAPI.Services
                             var dataTable = result.Tables[0]; // Pega a primeira tabela (planilha)
 
                             //verifica o cabeçalho do XLS
-                            if(dataTable.Columns.Count == 0 || dataTable.Rows.Count == 0)
+                            if (dataTable.Columns.Count == 0 || dataTable.Rows.Count == 0)
                                 throw new ArgumentException("Excel file is empty or does not contain data.");
 
                             //escrever o cabecalho
@@ -109,13 +109,13 @@ namespace CampaignBaseAPI.Services
 
         }
 
-        private static async Task<IFormFile>ValidateFileHasDataAsync(IFormFile file)
+        private static async Task<IFormFile> ValidateFileHasDataAsync(IFormFile file)
         {
             using var reader = new StreamReader(file.OpenReadStream());
             var header = await reader.ReadLineAsync() ?? ""; // Lê a primeira linha do arquivo (cabeçalho)
             var dataLine = await reader.ReadLineAsync(); // Lê a segunda linha do arquivo
 
-            if(header.Length == 0 || dataLine is null || dataLine.Length == 0)
+            if (header.Length == 0 || dataLine is null || dataLine.Length == 0)
                 throw new ArgumentException("File is empty or does not contain data.");
             return file;
         }

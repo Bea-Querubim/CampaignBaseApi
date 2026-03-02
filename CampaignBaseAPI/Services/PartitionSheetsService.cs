@@ -13,18 +13,22 @@ namespace CampaignBaseAPI.Services
     {
         public async Task<Dictionary<string, MemoryStream>> PartitionSheetsAsync(MemoryStream file, Sizes size, string fileName)
         {
-            file.Position = 0; // reseta a posição do stream
-            using var reader = new StreamReader(file);
 
+            if (file == null || file.Length == 0)
+                throw new ArgumentException(ReturnMessages.EmptyFile);
+
+            // Garante que a posição do stream está no início
+            file.Position = 0;
+
+            using var reader = new StreamReader(file);
             var count = default(int);
             int fileNamedNumberPage = 1;
             var partitionedSheets = new Dictionary<string, MemoryStream>();
             var header = await reader.ReadLineAsync(); // Lê o cabeçalho do arquivo CSV
             var line = await reader.ReadLineAsync(); // Lê a primeira linha de dados do arquivo CSV
-            var atualFile = new StringBuilder();
-
-            if (line == null || string.IsNullOrWhiteSpace(line))
+            if (string.IsNullOrWhiteSpace(header) || string.IsNullOrWhiteSpace(line))
                 throw new ArgumentException(ReturnMessages.EmptyFile);
+            var atualFile = new StringBuilder();
 
             do 
             {

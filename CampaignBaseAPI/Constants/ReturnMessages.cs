@@ -15,5 +15,6 @@ namespace CampaignBaseAPI.Constants
         public const string InvalidFileExtension = "Invalid file extension. Use allowed extensions: {0}.";
         public const string ZipErrorMontage = "An error occurred while creating the zip file.";
         public const string ErrorValidatingFields = "Error to process validation fields .";
+        public const string NoValidRowsAfterValidation = "No valid rows found after base validation. Check phone format, duplicates, and empty fields.";
     }
 }

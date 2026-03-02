@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using CampaignBaseAPI.Constants;
 using CampaignBaseAPI.Services;
+using CampaignBaseAPI.Models;
 
 namespace CampaignBaseAPI.Tests.Services
 {
@@ -18,10 +19,8 @@ namespace CampaignBaseAPI.Tests.Services
             ZipService zipService = new ZipService();
             Dictionary<string, MemoryStream>? zipNullable = null;
 
-            // Act
-            // Assert.ThrowsAsync é usado para verificar se a chamada do método CreateZipFileAsync lança uma exceção do tipo ArgumentNullException quando o dicionário de arquivos é nulo. O teste passa se a exceção for lançada, indicando que o método está lidando corretamente com a entrada nula.
-            var exception = await Assert.ThrowsAsync<ArgumentNullException>(() => zipService.CreateZipFileAsync(zipNullable!));
-            // Assert
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<ArgumentNullException>(() => zipService.CreateZipFileAsync(zipNullable!, "report", new List<string>(), new List<RemovedRowDetail>()));
             Assert.Equal("files", exception.ParamName);
         }
 
@@ -33,8 +32,7 @@ namespace CampaignBaseAPI.Tests.Services
             var files = new Dictionary<string, MemoryStream>();
 
             // Act & Assert
-            // Assert.ThrowsAsync é usado para verificar se a chamada do método CreateZipFileAsync lança uma exceção do tipo ArgumentException quando o dicionário de arquivos está vazio. O teste passa se a exceção for lançada, indicando que o método está lidando corretamente com a entrada vazia.
-            var exception = await Assert.ThrowsAsync<ArgumentException>(() => zipService.CreateZipFileAsync(files));
+            var exception = await Assert.ThrowsAsync<ArgumentException>(() => zipService.CreateZipFileAsync(files, "report", new List<string>(), new List<RemovedRowDetail>()));
             Assert.Equal("files", exception.ParamName);
         }
 
@@ -45,11 +43,14 @@ namespace CampaignBaseAPI.Tests.Services
             ZipService zipService = new ZipService();
             var files = new Dictionary<string, MemoryStream>
             {
-                ["file_PAG-1.csv"] = CreateCsvStream(GenerateDataMock(1000)) 
+                ["file_PAG-1.csv"] = CreateCsvStream(GenerateDataMock(1000))
             };
+            string report = "Relatório de teste";
+            var duplicatedPhones = new List<string>();
+            var removedRowDetails = new List<RemovedRowDetail>();
 
             // Act
-            var zipBytes = await zipService.CreateZipFileAsync(files);
+            var zipBytes = await zipService.CreateZipFileAsync(files, report, duplicatedPhones, removedRowDetails);
 
             // Assert
             Assert.NotNull(zipBytes);
@@ -58,14 +59,22 @@ namespace CampaignBaseAPI.Tests.Services
             using var zipStream = new MemoryStream(zipBytes);
             using var zipArchive = new ZipArchive(zipStream, ZipArchiveMode.Read);
 
-            Assert.Single(zipArchive.Entries);
-            Assert.Equal("file_PAG-1.csv", zipArchive.Entries[0].FullName);
+            // Deve conter 2 arquivos: o CSV e o Report.txt
+            Assert.Equal(2, zipArchive.Entries.Count);
+            Assert.Contains(zipArchive.Entries, entry => entry.FullName == "file_PAG-1.csv");
+            Assert.Contains(zipArchive.Entries, entry => entry.FullName == "Report.txt");
+            Assert.DoesNotContain(zipArchive.Entries, entry => entry.FullName == "DuplicatedPhones.txt");
 
-            using var entryStream = zipArchive.Entries[0].Open();
+            using var entryStream = zipArchive.Entries.First(entry => entry.FullName == "file_PAG-1.csv").Open();
             using var reader = new StreamReader(entryStream);
             var entryContent = await reader.ReadToEndAsync();
-
             Assert.Equal(1000, CountLines(entryContent));
+
+            // Verifica conteúdo do Report.txt
+            using var reportStream = zipArchive.Entries.First(entry => entry.FullName == "Report.txt").Open();
+            using var reportReader = new StreamReader(reportStream);
+            var reportContent = await reportReader.ReadToEndAsync();
+            Assert.Contains("Relatório de teste", reportContent);
         }
 
         [Fact]
@@ -78,9 +87,12 @@ namespace CampaignBaseAPI.Tests.Services
                 ["file_PAG-1.csv"] = CreateCsvStream(GenerateDataMock(1000)),
                 ["file_PAG-2.csv"] = CreateCsvStream(GenerateDataMock(200))
             };
+            string report = "Report content";
+            var duplicatedPhones = new List<string> { "11988888888" };
+            var removedRowDetails = new List<RemovedRowDetail> { new RemovedRowDetail { RowNumber = 1, OriginalPhone = "11988888888", NormalizedPhone = "11988888888", Reason = CampaignBaseAPI.Enums.RemovalReason.Reasons.DuplicatedPhone } };
 
             // Act
-            var zipBytes = await zipService.CreateZipFileAsync(files);
+            var zipBytes = await zipService.CreateZipFileAsync(files, report, duplicatedPhones, removedRowDetails);
 
             // Assert
             Assert.NotNull(zipBytes);
@@ -89,15 +101,29 @@ namespace CampaignBaseAPI.Tests.Services
             using var zipStream = new MemoryStream(zipBytes);
             using var zipArchive = new ZipArchive(zipStream, ZipArchiveMode.Read);
 
-            Assert.Equal(2, zipArchive.Entries.Count);
+            // Deve conter 4 arquivos: 2 CSVs, Report.txt e DuplicatedPhones.txt
+            Assert.Equal(4, zipArchive.Entries.Count);
             Assert.Contains(zipArchive.Entries, entry => entry.FullName == "file_PAG-1.csv");
             Assert.Contains(zipArchive.Entries, entry => entry.FullName == "file_PAG-2.csv");
+            Assert.Contains(zipArchive.Entries, entry => entry.FullName == "Report.txt");
+            Assert.Contains(zipArchive.Entries, entry => entry.FullName == "DuplicatedPhones.txt");
 
             using var entryStream = zipArchive.Entries.First(entry => entry.FullName == "file_PAG-2.csv").Open();
             using var reader = new StreamReader(entryStream);
             var entryContent = await reader.ReadToEndAsync();
-
             Assert.Equal(200, CountLines(entryContent));
+
+            // Verifica conteúdo do Report.txt
+            using var reportStream = zipArchive.Entries.First(entry => entry.FullName == "Report.txt").Open();
+            using var reportReader = new StreamReader(reportStream);
+            var reportContent = await reportReader.ReadToEndAsync();
+            Assert.Contains("Report content", reportContent);
+
+            // Verifica conteúdo do DuplicatedPhones.txt
+            using var dupPhonesStream = zipArchive.Entries.First(entry => entry.FullName == "DuplicatedPhones.txt").Open();
+            using var dupPhonesReader = new StreamReader(dupPhonesStream);
+            var dupPhonesContent = await dupPhonesReader.ReadToEndAsync();
+            Assert.Contains("11988888888", dupPhonesContent);
         }
 
         [Fact]
@@ -114,7 +140,7 @@ namespace CampaignBaseAPI.Tests.Services
             };
 
             // Act & Assert
-            var exception = await Assert.ThrowsAsync<Exception>(() => zipService.CreateZipFileAsync(files));
+            var exception = await Assert.ThrowsAsync<Exception>(() => zipService.CreateZipFileAsync(files, "report", new List<string>(), new List<RemovedRowDetail>()));
             Assert.Equal(ReturnMessages.ZipErrorMontage, exception.Message);
             Assert.NotNull(exception.InnerException);
         }
