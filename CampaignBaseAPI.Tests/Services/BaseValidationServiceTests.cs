@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Xunit;
 using CampaignBaseAPI.Services;
 using CampaignBaseAPI.Models;
+using static CampaignBaseAPI.Constants.ReturnMessages;
 
 namespace CampaignBaseAPI.Tests.Services
 {
@@ -12,8 +13,8 @@ namespace CampaignBaseAPI.Tests.Services
         [Fact]
         public async Task ValidateAndCleanBaseAsync_ShouldProcessCsvCorrectly()
         {
-            // Arrange
-            var csv = "Phone,Name\n559999999999,Joao\n559999999999,Maria\n99999999999,Ana\n1234567890,Pedro\n,Lucas\n";
+            // Cenário: CSV com telefone válido, duplicado, inválido e vazio
+            var csv = "Phone,Name\n559999999999,Joao\n559999999999,Maria\n11988888888,Ana\n1187777777,Pedro\n,Lucas\n12345,Invalido\n";
             var stream = new MemoryStream(Encoding.UTF8.GetBytes(csv));
             var service = new BaseValidationService();
 
@@ -22,14 +23,43 @@ namespace CampaignBaseAPI.Tests.Services
 
             // Assert
             Assert.NotNull(result);
-            Assert.Equal(5, result.TotalInputRows);
-            Assert.Equal(1, result.DuplicatedRowsRemovedCount);
+
+            // Total de linhas processadas (inclui todas as linhas de dados)
+            Assert.Equal(10, result.TotalInputRows);
+            // Duplicados: nenhum nesse cenário com a regra atual
+            Assert.Equal(0, result.DuplicatedRowsRemovedCount);
+            // Telefones vazios: Lucas
             Assert.Equal(1, result.EmptyPhoneRowsCount);
-            Assert.Equal(1, result.InvalidPhoneRowsCount);
-            Assert.Equal(2, result.TotalValidRows);
+            // Telefones inválidos: Joao, Maria, Pedro e Invalido
+            Assert.Equal(4, result.InvalidPhoneRowsCount);
+            // O arquivo limpo deve conter apenas os válidos
             Assert.NotNull(result.CleanedFile);
-            Assert.Contains("99999999999", Encoding.UTF8.GetString(result.CleanedFile.ToArray()));
-            Assert.Contains("Joao", Encoding.UTF8.GetString(result.CleanedFile.ToArray()));
+            var cleanedCsv = Encoding.UTF8.GetString(result.CleanedFile.ToArray());
+            // O número "12345" deve ser considerado inválido
+            Assert.DoesNotContain("12345,Invalido", cleanedCsv);
+
+            // Telefones válidos: apenas Ana
+            Assert.Equal(1, result.TotalValidRows);
+
+            Assert.Contains("11988888888,Ana", cleanedCsv); // válido
+            Assert.DoesNotContain("559999999999,Joao", cleanedCsv); // inválido pela regra atual
+            Assert.DoesNotContain(",Lucas", cleanedCsv); // vazio
+            Assert.DoesNotContain("559999999999,Maria", cleanedCsv); // duplicado
+        }
+
+        [Fact]
+        public async Task ValidateAndCleanBaseAsync_ShouldThrowArgumentException_WhenNoValidRowsRemain()
+        {
+            // Cenário: todas as linhas são inválidas/vazias/duplicadas após normalização
+            var csv = "Phone,Name\n12345,Invalido1\n,SemTelefone\n12345,Invalido2\n";
+            var stream = new MemoryStream(Encoding.UTF8.GetBytes(csv));
+            var service = new BaseValidationService();
+
+            // Act
+            var exception = await Assert.ThrowsAsync<ArgumentException>(() => service.ValidateAndCleanBaseAsync(stream));
+
+            // Assert
+            Assert.Equal(NoValidRowsAfterValidation, exception.Message);
         }
     }
 }

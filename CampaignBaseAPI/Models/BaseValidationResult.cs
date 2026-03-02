@@ -16,5 +16,7 @@ namespace CampaignBaseAPI.Models
         public int DuplicatedRowsRemovedCount { get; set; } = 0;
         public List<string>? DuplicatedPhonesNormalized { get; set; } = new List<string>();
         public List<RemovedRowDetail>? RemovedRowDetails { get; set; } = new List<RemovedRowDetail>();
+        public string Report { get; set; } = string.Empty;
+
     }
 }

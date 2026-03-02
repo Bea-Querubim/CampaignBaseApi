@@ -16,18 +16,20 @@ A CampaignBase API facilita o gerenciamento de grandes bases de contatos, dividi
   - 10.000 registros
 - ✅ **Download Automatizado**: Geração de arquivo ZIP contendo todos os lotes processados
 - ✅ **Validação de Entrada**: Verificação de formato e tamanho de arquivo
+- ✅ **Validação e Limpeza da Base**:
+  - Normalização de telefone (remoção de caracteres e tratamento de DDI)
+  - Remoção de números inválidos e campos de telefone vazios
+  - Deduplicação por telefone normalizado
+- ✅ **Relatórios no ZIP**:
+  - `Report.txt` com resumo de processamento
+  - `DuplicatedPhones.txt` quando houver números duplicados
 - ✅ **Documentação Interativa**: Interface Swagger para testes e documentação da API
 
 ## 🚀 Funcionalidades Futuras
 
-- 🔄 **Validação de Campos em Branco**: Identificação e tratamento de registros com dados incompletos
-- 🔄 **Detecção de Duplicatas**: Validação e remoção de números de telefone duplicados
-- 🔄 **Relatórios Detalhados**: Geração de relatórios com:
-  - Quantidade total de registros processados
-  - Número de registros válidos após limpeza
-  - Estatísticas de duplicatas removidas
-  - Lista de registros inválidos
-- 🔄 **Validação de Números**: Verificação de formato de números de telefone
+- 🔄 **Tratamento Global de Exceções**: Padronização de respostas de erro em middleware único
+- 🔄 **Observabilidade**: Logs estruturados e rastreabilidade de requisições
+- 🔄 **CI/CD**: Pipeline automático de build e testes
 
 ## 🛠️ Tecnologias Utilizadas
 
@@ -107,7 +109,9 @@ Retorna um arquivo ZIP contendo os arquivos particionados da base original.
 base_contatos.zip
 ├── base_contatos_PAG-1.csv
 ├── base_contatos_PAG-2.csv
-└── base_contatos_PAG-3.csv
+├── base_contatos_PAG-3.csv
+├── Report.txt
+└── DuplicatedPhones.txt (quando houver duplicados)
 ```
 
 #### Possíveis Erros
